@@ -1,5 +1,3 @@
-// import utils from "./utils";
-
 class GameOfLife {
 	constructor(
 		canvas,
@@ -12,6 +10,7 @@ class GameOfLife {
 		mod,
 		aliveStyle,
 		deadStyle,
+		addGlow,
 		gridStyle,
 		showGrid
 	) {
@@ -22,9 +21,10 @@ class GameOfLife {
 		this.rows = rows;
 		this.cols = cols;
 		this.maxCellSize = maxCellSize;
-		this.mod = mod;
+		this.mod = mod; //looped grid
 		this.aliveStyle = aliveStyle;
 		this.deadStyle = deadStyle;
+		this.addGlow = addGlow;
 		this.gridStyle = gridStyle;
 		this.drawGrid();
 		showGrid ? this.showGrid() : this.hideGrid();
@@ -86,48 +86,40 @@ class GameOfLife {
 			for (let r = 0; r < this.rows; r++) {
 				//cell
 				this.ctx.fillStyle = this.cellArray[r][c]
-					? this.aliveStyle
+					? this.aliveStyle.toLowerCase() === "rainbow"
+						? "hsla(" +
+						  (c + r * 5 * Math.floor((c + r) / 100)) +
+						  ", 80%, 80%, 1)"
+						: this.aliveStyle
 					: this.deadStyle;
-				//   "hsla(0, 0%, 0%, 0.8)";
-				//   "hsla(" +
-				//   (c + r < 100 ? c + r * 10 : c + r * 5) +
-				//   ", 80%, 80%, 1)"
-				// : "hsla(240, 30%, 20%, 0.5)";
+				//   "hsla(240, 30%, 20%, 0.5)";
 				this.ctx.fillRect(
 					gridLeft + c * cellSize,
 					gridTop + r * cellSize,
-					cellSize + 1,
-					cellSize + 1
+					this.addGlow ? cellSize + c : cellSize + 1,
+					this.addGlow ? cellSize + r : cellSize + 1
 				);
-				// //grid
-				// if (this.gridStyle) {
-				// 	this.ctx.strokeStyle = this.gridStyle;
-				// 	this.ctx.strokeRect(
-				// 		gridLeft + c * cellSize,
-				// 		gridTop + r * cellSize,
-				// 		cellSize,
-				// 		cellSize
-				// 	);
-				// }
 			}
 		}
 
-		// //Fill Grid Borders On Canvas
-		// this.ctx.fillStyle = this.deadStyle;
-		// this.ctx.fillRect(0, 0, this.canvas.width, gridTop + 1);
-		// this.ctx.fillRect(0, 0, this.gridLeft + 1, this.canvas.height);
-		// this.ctx.fillRect(
-		// 	0,
-		// 	gridTop + this.rows * cellSize - 1,
-		// 	this.canvas.width,
-		// 	gridTop
-		// );
-		// this.ctx.fillRect(
-		// 	gridLeft + this.cols * cellSize - 1,
-		// 	0,
-		// 	gridLeft,
-		// 	this.canvas.height
-		// );
+		if (this.addGlow) {
+			//Fill Grid Borders On Canvas
+			this.ctx.fillStyle = this.deadStyle;
+			this.ctx.fillRect(0, 0, this.canvas.width, gridTop + 1);
+			this.ctx.fillRect(0, 0, this.gridLeft + 1, this.canvas.height);
+			this.ctx.fillRect(
+				0,
+				gridTop + this.rows * cellSize - 1,
+				this.canvas.width,
+				gridTop
+			);
+			this.ctx.fillRect(
+				gridLeft + this.cols * cellSize - 1,
+				0,
+				gridLeft,
+				this.canvas.height
+			);
+		}
 	}
 
 	drawGrid() {

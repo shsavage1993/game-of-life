@@ -1,5 +1,4 @@
 import { GameOfLife } from "./gameOfLife.js";
-// import utils from "./utils";
 
 const canvas = document.getElementById("gol-canvas");
 const ctx = canvas.getContext("2d");
@@ -25,7 +24,7 @@ const columns = 250;
 const rows = Math.ceil(
 	0.8 * (window.screen.height / window.screen.width) * columns
 );
-const delay = 0;
+const delay = 75;
 
 let gameOfLife = new GameOfLife(
 	canvas,
@@ -37,9 +36,10 @@ let gameOfLife = new GameOfLife(
 	100,
 	true,
 	"white",
-	"black",
+	"black", //for glow effect, set alpha < 1 //for rainbow aliveStyle, use deadStyle = "hsla(240, 30%, 20%, 0.5)"
+	false,
 	"dimgrey",
-	true
+	false
 );
 
 // gameOfLife.initBlankState();
