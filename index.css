@@ -1,0 +1,23 @@
+body {
+	margin: 0px;
+}
+
+#gol-stage {
+	position: relative;
+	display: block;
+	margin: 10px auto;
+}
+
+canvas {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	/* border: 2px solid red; */
+}
+#gol-canvas {
+	z-index: 1;
+	background-color: black;
+}
+#gol-grid-canvas {
+	z-index: 2;
+}
