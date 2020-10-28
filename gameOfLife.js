@@ -27,6 +27,7 @@ class GameOfLife {
 		this.addGlow = addGlow;
 		this.gridStyle = gridStyle;
 		this.drawGrid();
+		this._showGrid;
 		showGrid ? this.showGrid() : this.hideGrid();
 		this.cellArray = this.initCellArray();
 		this.initBlankState();
@@ -162,10 +163,12 @@ class GameOfLife {
 	}
 
 	showGrid() {
+		this._showGrid = true;
 		this.canvasGrid.style.display = "block";
 	}
 
 	hideGrid() {
+		this._showGrid = false;
 		this.canvasGrid.style.display = "none";
 	}
 
