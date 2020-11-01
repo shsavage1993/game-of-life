@@ -78,34 +78,53 @@ class GameOfLife {
 		}
 	}
 
-	draw() {
+	draw(bwMode = false) {
+		let aliveStyle;
+		let deadStyle;
+		let addGlow;
+		if (bwMode) {
+			aliveStyle = "white";
+			deadStyle = "black";
+			addGlow = false;
+		} else {
+			aliveStyle = this.aliveStyle;
+			deadStyle = this.deadStyle;
+			addGlow = this.addGlow;
+		}
+
 		const cellSize = this.cellSize;
 		const gridTop = this.gridTop;
 		const gridLeft = this.gridLeft;
+		const sumRowsCols = this.rows + this.cols;
 
 		for (let c = 0; c < this.cols; c++) {
 			for (let r = 0; r < this.rows; r++) {
 				//cell
 				this.ctx.fillStyle = this.cellArray[r][c]
-					? this.aliveStyle.toLowerCase() === "rainbow"
+					? aliveStyle.toLowerCase() === "rainbow"
 						? "hsla(" +
-						  (c + r * 5 * Math.floor((c + r) / 100)) +
+						  ((1000 * c) / this.cols +
+								((500 * r) / this.rows) *
+									0.1 *
+									Math.floor(
+										(7 * (c - 0.8 * r)) / sumRowsCols
+									)) +
 						  ", 80%, 80%, 1)"
-						: this.aliveStyle
-					: this.deadStyle;
+						: aliveStyle
+					: deadStyle;
 				//   "hsla(240, 30%, 20%, 0.5)";
 				this.ctx.fillRect(
 					gridLeft + c * cellSize,
 					gridTop + r * cellSize,
-					this.addGlow ? cellSize + c : cellSize + 1,
-					this.addGlow ? cellSize + r : cellSize + 1
+					addGlow ? cellSize + 1 : cellSize + 1,
+					addGlow ? cellSize + (r * 100) / this.rows : cellSize + 1
 				);
 			}
 		}
 
-		if (this.addGlow) {
+		if (addGlow) {
 			//Fill Grid Borders On Canvas
-			this.ctx.fillStyle = this.deadStyle;
+			this.ctx.fillStyle = deadStyle;
 			this.ctx.fillRect(0, 0, this.canvas.width, gridTop + 1);
 			this.ctx.fillRect(0, 0, this.gridLeft + 1, this.canvas.height);
 			this.ctx.fillRect(

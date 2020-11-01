@@ -17,11 +17,18 @@ window.addEventListener("resize", () => {
 	canvas.height = windowScreenRatio() * window.screen.height;
 	canvasGrid.width = window.innerWidth - 8;
 	canvasGrid.height = windowScreenRatio() * window.screen.height;
-	gameOfLife.draw();
+	if (pause) {
+		gameOfLife.draw(true);
+		drawCell(...selectedCell);
+	} else {
+		gameOfLife.draw();
+	}
 	gameOfLife.drawGrid();
 });
 
-const columns = 100;
+/* ---------- Game Of Life ---------- */
+
+const columns = 250;
 const rows = Math.ceil(
 	0.8 * (window.screen.height / window.screen.width) * columns
 );
@@ -35,15 +42,16 @@ let gameOfLife = new GameOfLife(
 	rows,
 	columns,
 	100,
-	true,
-	"white",
-	"black", //for glow effect, set alpha < 1 //for rainbow aliveStyle, use deadStyle = "hsla(240, 30%, 20%, 0.5)"
-	false,
+	true, // Modulus Grid
+	// for glow effect, set alpha < 1
+	//for rainbow aliveStyle, use deadStyle = "hsla(240, 30%, 20%, 0.5)"
+	"rainbow",
+	"hsla(240, 30%, 20%, 0.5)",
+	true, // add glow
 	"dimgrey",
-	false
+	false // show grid
 );
 
-// gameOfLife.initBlankState();
 gameOfLife.initRandomState();
 gameOfLife.draw();
 let ani;
@@ -51,6 +59,8 @@ let pause = false;
 
 function animate() {
 	if (pause) {
+		gameOfLife.draw(true); //bwMode ON
+		drawCell(...selectedCell);
 		return;
 	}
 	gameOfLife.update();
@@ -66,6 +76,8 @@ setTimeout(() => {
 	ani = requestAnimationFrame(animate);
 }, delay);
 
+/* ---------- Button Functions ---------- */
+
 const togglePlayButton = document.getElementById("toggle-play");
 const toggleGridButton = document.getElementById("toggle-grid");
 const clearCanvasButton = document.getElementById("clear-canvas");
@@ -76,6 +88,7 @@ togglePlayButton.addEventListener("click", () => {
 	} else {
 		buildMode();
 	}
+	togglePlayButton.blur();
 });
 
 toggleGridButton.addEventListener("click", () => {
@@ -83,10 +96,41 @@ toggleGridButton.addEventListener("click", () => {
 });
 
 clearCanvasButton.addEventListener("click", () => {
-	buildMode();
 	gameOfLife.initBlankState();
-	gameOfLife.draw();
+	gameOfLife.draw(true); //bwMode ON
+	drawCell(...selectedCell);
+	buildMode();
+	clearCanvasButton.blur();
 });
+
+/* ---------- Event Listener Helper Functions ---------- */
+
+const selectedCell = [0, 0]; // [row,col]
+
+function runMode() {
+	pause = false;
+	toggleGridButton.disabled = false;
+	togglePlayButton.textContent = "Pause";
+
+	gameOfLife._showGrid ? gameOfLife.showGrid() : gameOfLife.hideGrid();
+
+	canvas.removeEventListener("click", canvasClick);
+	canvasGrid.removeEventListener("click", canvasClick);
+
+	ani = requestAnimationFrame(animate);
+}
+
+function buildMode() {
+	pause = true;
+	toggleGridButton.disabled = true;
+	togglePlayButton.textContent = "Play";
+
+	canvasGrid.style.display = "block"; //Show grid in build mode
+
+	canvas.addEventListener("click", canvasClick);
+	canvasGrid.addEventListener("click", canvasClick);
+	window.addEventListener("keydown", canvasSelectCell);
+}
 
 function canvasClick(evt) {
 	const cellSize = gameOfLife.cellSize;
@@ -107,41 +151,52 @@ function canvasClick(evt) {
 	try {
 		gameOfLife.cellArray[row][col] = gameOfLife.cellArray[row][col] ? 0 : 1;
 		console.log(`row: ${row}, col: ${col}`);
-		gameOfLife.draw();
+		gameOfLife.draw(true); //bwMode ON
+		drawCell(...selectedCell);
 	} catch {
 		return;
 	}
 }
 
-function runMode() {
-	pause = false;
-	togglePlayButton.textContent = "Pause";
-	// canvas.removeEventListener("mouseover", canvasHover);
-	canvas.removeEventListener("click", canvasClick);
-	canvasGrid.removeEventListener("click", canvasClick);
-	ani = requestAnimationFrame(animate);
+function canvasSelectCell(evt) {
+	const rows = gameOfLife.rows;
+	const cols = gameOfLife.cols;
+	const [row, col] = selectedCell;
+
+	switch (evt.code) {
+		case "ArrowLeft":
+			selectedCell[1] = (col + cols - 1) % cols;
+			break;
+		case "ArrowRight":
+			selectedCell[1] = (col + cols + 1) % cols;
+			break;
+		case "ArrowUp":
+			selectedCell[0] = (row + rows - 1) % rows;
+			break;
+		case "ArrowDown":
+			selectedCell[0] = (row + rows + 1) % rows;
+			break;
+		case "Space":
+			gameOfLife.cellArray[row][col] = gameOfLife.cellArray[row][col]
+				? 0
+				: 1;
+	}
+
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	gameOfLife.draw(true);
+	drawCell(...selectedCell);
 }
 
-function buildMode() {
-	pause = true;
-	togglePlayButton.textContent = "Play";
-	// canvas.addEventListener("mouseover", canvasHover)
-	canvas.addEventListener("click", canvasClick);
-	canvasGrid.addEventListener("click", canvasClick);
+function drawCell(row, col) {
+	const cellSize = gameOfLife.cellSize;
+	const gridTop = gameOfLife.gridTop;
+	const gridLeft = gameOfLife.gridLeft;
+
+	ctx.fillStyle = gameOfLife.cellArray[row][col] ? "red" : "green";
+	ctx.fillRect(
+		gridLeft + col * cellSize,
+		gridTop + row * cellSize,
+		cellSize + 1,
+		cellSize + 1
+	);
 }
-
-// function canvasHover() {
-
-// }
-
-// setTimeout(() => {
-// 	pause = true;
-// }, 2000);
-
-// function timeit(func) {
-// 	let then = Date.now();
-// 	for (let i = 0; i < 1000; i++) {
-// 		func();
-// 	}
-// 	console.log(Date.now() - then);
-// }
