@@ -9,11 +9,23 @@
 		<title>Game Of Life</title>
 	</head>
 	<body>
-		<button id="toggle-play">Pause</button>
-		<button id="toggle-grid">Toggle Grid</button>
-		<button id="clear-canvas">Clear Canvas</button>
-		<button id="save-canvas">Save State</button>
-		<button id="load-canvas">Load State</button>
+		<div id="controls-div">
+			<div id="control-rows-cols-div">
+				<label for="min-res-input">Min resolution:</label
+				><input id="min-res-input" type="text" />
+				<label for="rows-input">rows:</label
+				><input id="rows-input" type="text" />
+				<label for="cols-input">cols:</label
+				><input id="cols-input" type="text" />
+			</div>
+			<div id="control-buttons-div">
+				<button id="toggle-play">Pause</button>
+				<button id="toggle-grid">Toggle Grid</button>
+				<button id="clear-canvas">Clear Canvas</button>
+				<button id="save-canvas">Save State</button>
+				<button id="load-canvas">Load State</button>
+			</div>
+		</div>
 		<div id="gol-stage">
 			<canvas id="gol-canvas"></canvas>
 			<canvas id="gol-grid-canvas"></canvas>

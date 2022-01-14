@@ -1,25 +1,23 @@
-import { GameOfLife } from "./gameOfLife.js";
+import { GameOfLife } from './gameOfLife.js';
 
-const canvas = document.getElementById("gol-canvas");
-const ctx = canvas.getContext("2d");
-const canvasGrid = document.getElementById("gol-grid-canvas");
-const ctxGrid = canvasGrid.getContext("2d");
-const windowScreenRatio = () => {
-	return (0.8 * window.innerWidth) / window.screen.width;
-};
-canvas.width = window.innerWidth - 8;
-canvas.height = windowScreenRatio() * window.screen.height;
-canvasGrid.width = window.innerWidth - 8;
-canvasGrid.height = windowScreenRatio() * window.screen.height;
+const controlsDiv = document.getElementById('controls-div');
+const golStage = document.getElementById('gol-stage');
+const canvas = document.getElementById('gol-canvas');
+const canvasGrid = document.getElementById('gol-grid-canvas');
+const ctx = canvas.getContext('2d');
+const ctxGrid = canvasGrid.getContext('2d');
 
-window.addEventListener("resize", () => {
-	canvas.width = window.innerWidth - 8;
-	canvas.height = windowScreenRatio() * window.screen.height;
-	canvasGrid.width = window.innerWidth - 8;
-	canvasGrid.height = windowScreenRatio() * window.screen.height;
+const resInput = document.getElementById('min-res-input');
+const rowsInput = document.getElementById('rows-input');
+const colsInput = document.getElementById('cols-input');
+
+resizeCanvas();
+
+window.addEventListener('resize', () => {
+	resizeCanvas();
 	if (pause) {
 		gameOfLife.draw(true);
-		drawCell(...selectedCell);
+		drawSelectedCell(...selectedCell);
 	} else {
 		gameOfLife.draw();
 	}
@@ -27,11 +25,17 @@ window.addEventListener("resize", () => {
 });
 
 /* ---------- Game Of Life ---------- */
+const selectedCell = [0, 0]; // [row,col]
 
-const columns = 250;
-const rows = Math.ceil(
-	0.8 * (window.screen.height / window.screen.width) * columns
-);
+// Set initial max res, rows and cols
+let minRes = 8;
+let rows = Math.floor(canvas.getBoundingClientRect().height / minRes);
+let columns = Math.floor(canvas.getBoundingClientRect().width / minRes);
+
+resInput.value = minRes;
+rowsInput.value = rows;
+colsInput.value = columns;
+
 const delay = 75;
 
 let gameOfLife = new GameOfLife(
@@ -41,14 +45,14 @@ let gameOfLife = new GameOfLife(
 	ctxGrid,
 	rows,
 	columns,
-	100,
+	minRes,
 	true, // Modulus Grid
 	// for glow effect, set alpha < 1
 	//for rainbow aliveStyle, use deadStyle = "hsla(240, 30%, 20%, 0.5)"
-	"rainbow",
-	"hsla(240, 30%, 20%, 0.5)",
+	'rainbow',
+	'hsla(240, 30%, 20%, 0.5)',
 	true, // add glow
-	"dimgrey",
+	'dimgrey',
 	false // show grid
 );
 
@@ -60,11 +64,10 @@ let pause = false;
 function animate() {
 	if (pause) {
 		gameOfLife.draw(true); //bwMode ON
-		drawCell(...selectedCell);
+		drawSelectedCell(...selectedCell);
 		return;
 	}
 	gameOfLife.update();
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	gameOfLife.draw();
 
 	setTimeout(() => {
@@ -76,14 +79,16 @@ setTimeout(() => {
 	ani = requestAnimationFrame(animate);
 }, delay);
 
-/* ---------- Button Functions ---------- */
+/* ---------- Controls Functions ---------- */
 
-const togglePlayButton = document.getElementById("toggle-play");
-const toggleGridButton = document.getElementById("toggle-grid");
-const clearCanvasButton = document.getElementById("clear-canvas");
+const togglePlayButton = document.getElementById('toggle-play');
+const toggleGridButton = document.getElementById('toggle-grid');
+const clearCanvasButton = document.getElementById('clear-canvas');
+const saveStateButton = document.getElementById('save-canvas');
+const loadStateButton = document.getElementById('load-canvas');
 
-togglePlayButton.addEventListener("click", () => {
-	if (togglePlayButton.textContent === "Play") {
+togglePlayButton.addEventListener('click', () => {
+	if (togglePlayButton.textContent === 'Play') {
 		runMode();
 	} else {
 		buildMode();
@@ -91,31 +96,98 @@ togglePlayButton.addEventListener("click", () => {
 	togglePlayButton.blur();
 });
 
-toggleGridButton.addEventListener("click", () => {
+toggleGridButton.addEventListener('click', () => {
 	gameOfLife._showGrid ? gameOfLife.hideGrid() : gameOfLife.showGrid();
 });
 
-clearCanvasButton.addEventListener("click", () => {
+clearCanvasButton.addEventListener('click', () => {
 	gameOfLife.initBlankState();
 	gameOfLife.draw(true); //bwMode ON
-	drawCell(...selectedCell);
+	drawSelectedCell(...selectedCell);
 	buildMode();
 	clearCanvasButton.blur();
 });
 
+[resInput, rowsInput, colsInput].forEach((input) =>
+	input.addEventListener('keydown', function (event) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			const value = parseFloat(input.value);
+
+			if (value) {
+				switch (input.id) {
+					case 'min-res-input':
+						minRes = value;
+						gameOfLife.setMinRes(value);
+						input.blur();
+						break;
+					case 'rows-input':
+						rows = value;
+						gameOfLife.setRows(value);
+						input.blur();
+						break;
+					case 'cols-input':
+						columns = value;
+						gameOfLife.setCols(value);
+						input.blur();
+						break;
+				}
+				resetSelectedCell();
+			} else {
+				resetInput(event, input);
+			}
+		}
+		if (event.key === 'Escape') {
+			resetInput(event, input);
+		}
+	})
+);
+
+function resetInput(event, input) {
+	event.preventDefault();
+	switch (input.id) {
+		case 'min-res-input':
+			input.value = minRes;
+			break;
+		case 'rows-input':
+			input.value = rows;
+			break;
+		case 'cols-input':
+			input.value = columns;
+			break;
+	}
+	input.blur();
+}
+
 /* ---------- Event Listener Helper Functions ---------- */
 
-const selectedCell = [0, 0]; // [row,col]
+function resizeCanvas() {
+	// Set game of life stage height to fill page
+	golStage.style.height =
+		window.innerHeight - controlsDiv.getBoundingClientRect().height + 'px';
+
+	const canvasWidth = canvas.getBoundingClientRect().width;
+	const canvasHeight = canvas.getBoundingClientRect().height;
+	canvas.width = canvasWidth;
+	canvas.height = canvasHeight;
+	canvasGrid.width = canvasWidth;
+	canvasGrid.height = canvasHeight;
+}
+
+function resetSelectedCell() {
+	selectedCell[0] = 0;
+	selectedCell[1] = 0;
+}
 
 function runMode() {
 	pause = false;
 	toggleGridButton.disabled = false;
-	togglePlayButton.textContent = "Pause";
+	togglePlayButton.textContent = 'Pause';
 
 	gameOfLife._showGrid ? gameOfLife.showGrid() : gameOfLife.hideGrid();
 
-	canvas.removeEventListener("click", canvasClick);
-	canvasGrid.removeEventListener("click", canvasClick);
+	canvas.removeEventListener('click', mouseSelectCell);
+	canvasGrid.removeEventListener('click', mouseSelectCell);
 
 	ani = requestAnimationFrame(animate);
 }
@@ -123,14 +195,20 @@ function runMode() {
 function buildMode() {
 	pause = true;
 	toggleGridButton.disabled = true;
-	togglePlayButton.textContent = "Play";
+	togglePlayButton.textContent = 'Play';
 
-	canvasGrid.style.display = "block"; //Show grid in build mode
+	// saveStateButton;
+	// loadStateButton;
+	canvasGrid.style.display = 'block'; //Show grid in build mode
 
-	canvas.addEventListener("click", canvasClick);
-	canvasGrid.addEventListener("click", canvasClick);
-	window.addEventListener("keydown", canvasSelectCell);
+	canvas.addEventListener('click', mouseSelectCell);
+	canvasGrid.addEventListener('click', mouseSelectCell);
+	window.addEventListener('keydown', arrowSelectCell);
 }
+
+function selectionMode() {}
+
+function loadStateMode() {}
 
 function canvasClick(evt) {
 	const cellSize = gameOfLife.cellSize;
@@ -148,55 +226,61 @@ function canvasClick(evt) {
 	const col = Math.floor(
 		(evt.pageX - rect.left - gameOfLife.gridLeft) / cellSize
 	);
+	return [row, col];
+}
+
+function mouseSelectCell(evt) {
+	const [row, col] = canvasClick(evt);
 	try {
 		gameOfLife.cellArray[row][col] = gameOfLife.cellArray[row][col] ? 0 : 1;
 		console.log(`row: ${row}, col: ${col}`);
 		gameOfLife.draw(true); //bwMode ON
-		drawCell(...selectedCell);
+		selectedCell[0] = row;
+		selectedCell[1] = col;
+		drawSelectedCell(...selectedCell);
 	} catch {
 		return;
 	}
 }
 
-function canvasSelectCell(evt) {
+function arrowSelectCell(evt) {
 	const rows = gameOfLife.rows;
 	const cols = gameOfLife.cols;
 	const [row, col] = selectedCell;
 
 	switch (evt.code) {
-		case "ArrowLeft":
+		case 'ArrowLeft':
 			selectedCell[1] = (col + cols - 1) % cols;
 			break;
-		case "ArrowRight":
+		case 'ArrowRight':
 			selectedCell[1] = (col + cols + 1) % cols;
 			break;
-		case "ArrowUp":
+		case 'ArrowUp':
 			selectedCell[0] = (row + rows - 1) % rows;
 			break;
-		case "ArrowDown":
+		case 'ArrowDown':
 			selectedCell[0] = (row + rows + 1) % rows;
 			break;
-		case "Space":
+		case 'Space':
 			gameOfLife.cellArray[row][col] = gameOfLife.cellArray[row][col]
 				? 0
 				: 1;
 	}
 
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	gameOfLife.draw(true);
-	drawCell(...selectedCell);
+	drawSelectedCell(...selectedCell);
 }
 
-function drawCell(row, col) {
+function drawSelectedCell(row, col) {
 	const cellSize = gameOfLife.cellSize;
 	const gridTop = gameOfLife.gridTop;
 	const gridLeft = gameOfLife.gridLeft;
 
-	ctx.fillStyle = gameOfLife.cellArray[row][col] ? "red" : "green";
+	ctx.fillStyle = gameOfLife.cellArray[row][col] ? 'red' : 'green';
 	ctx.fillRect(
 		gridLeft + col * cellSize,
 		gridTop + row * cellSize,
-		cellSize + 1,
-		cellSize + 1
+		cellSize,
+		cellSize
 	);
 }

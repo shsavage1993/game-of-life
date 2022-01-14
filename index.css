@@ -1,17 +1,39 @@
 body {
 	margin: 0px;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+#controls-div {
+	padding: 3px 0px;
+}
+
+#control-rows-cols-div {
+	padding: 2px 0px;
+}
+
+label {
+	margin-right: 3px;
+}
+
+input {
+	width: 40px;
+	margin-right: 8px;
 }
 
 #gol-stage {
 	position: relative;
-	display: block;
-	margin: 10px auto;
+	margin: 0px auto;
+	width: 100%;
 }
 
 canvas {
 	position: absolute;
-	left: 50%;
+	left: calc(50%);
 	transform: translateX(-50%);
+	width: 100%;
+	height: 100%;
 	/* border: 2px solid red; */
 }
 #gol-canvas {
